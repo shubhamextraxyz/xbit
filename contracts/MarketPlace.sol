@@ -2,42 +2,49 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "hardhat/console.sol";
 
-contract MarketPlace{
+contract MarketPlace is ERC1155Holder {
 
-    uint public batchCount;
-    uint public itemNumber;
+    uint public batchListedCount;
+    uint public batchIdIndex;
+    uint public priceOfanItem;
+
+    uint[] public batchItemsIds;
+    uint[] public batchItemsValues;
+
+    uint totalListedItems;
+
+    // uint[] public batchItemsIds = new uint256[](10);
+    // uint[] public batchItemsValues = new uint256[](10);
 
     mapping(uint => bool) public itemSold;
 
     struct Batch {
         uint batchId;
-        uint[] itemIds;
-        uint[] itemAmounts; 
+        uint[] batchItemsIds;
+        uint[] batchItemsValues;
         IERC1155 nft;
         uint batchPrice;
         address payable seller;
-        mapping(uint => bool) itemSoldForBatch;
-    
     }
 
     event Offered(
         uint batchId,
         address indexed nft,
-        uint batchCount,
+        uint batchListedCount,
         uint batchPrice,
         address indexed seller
     );
 
     event Bought(
-        uint itemId,
+        uint batchId,
+        uint batchItemIds,
         address indexed nft,
-        uint tokenId,
-        uint price,
+        uint batchListedCount,
+        uint priceOfanItem,
         address indexed seller,
         address indexed buyer
     );
@@ -45,63 +52,63 @@ contract MarketPlace{
     // itemId -> Item
     mapping(uint => Batch) public batchs;
 
-        // Make item to offer on the marketplace
-    function makeBatch(IERC1155 _nft, uint _batchId, uint _batchprice, uint[] memory _itemIds, uint[] memory _itemAmounts) external nonReentrant {
-        require(_price > 0, "Price must be greater than zero");
-        // increment itemCount
-        batchCount ++;
-        // transfer nft
-        _nft.safeBatchTransferFrom(msg.sender, address(this), _itemIds, _itemAmounts, "");
+    function makeBatch(IERC1155 _nft, uint _batchId, uint _batchprice) external {
 
-        batchs[batchCount] = Batch (
-            batchCount,
-            _itemIds,
-            _itemAmounts,
-            _nft,
-            _batchprice,
-            msg.sender,
-            false
-        );
+        totalListedItems = _batchId*10;
+        batchListedCount++;
+
+        for (uint i = totalListedItems-9; i <= totalListedItems; i++) {
+            batchItemsIds.push(i);
+            batchItemsValues.push(1);
+        }
+
+        _nft.safeBatchTransferFrom(msg.sender, address(this), batchItemsIds, batchItemsValues, "");
+
+        Batch storage newBatch = batchs[batchListedCount];
+        newBatch.batchId = batchListedCount;
+        newBatch.batchItemsIds = batchItemsIds;
+        newBatch.batchItemsValues = batchItemsValues;
+        newBatch.nft = _nft;
+        newBatch.batchPrice = _batchprice;
+        newBatch.seller = payable(msg.sender);
 
         emit Offered(
             _batchId,
             address(_nft),
-            batchCount,
+            batchListedCount,
             _batchprice,
             msg.sender
         );
     }
 
-    function purchaseItemFromBatch(uint _batchId) external payable nonReentrant {
+    function purchaseOneItemFromBatch(uint _batchId) external payable {
 
-        if(itemNumber<=10){
-            itemNumber++;
-        } else{
-            itemNumber = 0;
+// DIkat yha pe hai
+        if (batchIdIndex < 10) {
+            batchIdIndex++;
+        } else {
+            if (batchIdIndex >= 10) {
+                batchIdIndex = 0;
+            }
+            batchIdIndex++;
         }
-        
-        itemNumber++;
 
         Batch storage batch = batchs[_batchId];
-        require(_batchId > 0 && _batchId <= batchCount, "item doesn't exist"); 
+        require(_batchId > 0 && _batchId <= batchListedCount, "Item doesn't exist");
 
-        require(!batch.itemSoldForBatch[itemNumber], "item already sold");
-        
-        batch.seller.transfer(batch.batchPrice/batch.itemIds.length);
-    
-        batch.itemSoldForBatch[itemNumber] = true;
+        priceOfanItem = batch.batchPrice/ 10;
+        batch.seller.transfer(batch.batchPrice/ 10);
 
-        batch.nft.safeTransferFrom(address(this), msg.sender, itemIds[itemNumber], itemAmounts[itemNumber], "");
+        batch.nft.safeTransferFrom(address(this), msg.sender, batch.batchItemsIds[batchIdIndex - 1], batch.batchItemsValues[batchIdIndex - 1], "");
         emit Bought(
             _batchId,
-            itemIds[itemNumber],
+            batch.batchItemsIds[batchIdIndex - 1],
             address(batch.nft),
-            batchCount,
-            batch.batchPrice,
-            msg.sender,
-            batch.seller
+            batchListedCount,
+            priceOfanItem,
+            batch.seller,
+            msg.sender
         );
+
     }
-
-
 }

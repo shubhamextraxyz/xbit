@@ -9,6 +9,11 @@ contract NFT is ERC1155{
     string public symbol;
     string public baseURI;
 
+    // This will also work
+
+    // uint256[] public ids = new uint256[](10);
+    // uint256[] public values = new uint256[](10);
+
     uint256[] public ids;
     uint256[] public values;
 
@@ -24,11 +29,17 @@ contract NFT is ERC1155{
     function mintTokens() public{
 
         totalCount = totalCount + 10;
-        batchCount++
+        batchCount++;
 
         for(uint i = totalCount-9; i<=totalCount; i++){
-            ids[i-1]=i;
-            values[i-1]=1;
+
+            // This will also work
+            
+            // ids[i - (totalCount - 9)] = i;
+            // values[i - (totalCount - 9)] = 1;
+
+            ids.push(i);
+            values.push(1);
         }
 
         _mintBatch(msg.sender, ids, values, "");

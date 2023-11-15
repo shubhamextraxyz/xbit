@@ -165,6 +165,7 @@ describe("Marketplace", ()=>{
             result = transsaction.wait()
 
 //--------------------------Batch 2------------------------------------------------------------
+
             transsaction = await nft.connect(addrs[1]).mintTokens()
             result = transsaction.wait()
 
@@ -178,21 +179,90 @@ describe("Marketplace", ()=>{
 
         it('Should update item/items from a batch as sold, pay seller, transfer NFT to buyer, charge fees and emit a Bought event', async()=>{
 
-            for (let index = 1; index <=10; index++) {
+            await expect((await market.connect(buyer).purchaseOneItemFromBatch(1, {value: toWei(priceOfanItem)})).wait())
+            .to.emit(market, "Bought")
+              .withArgs(
+                1,
+                1,
+                await nft.getAddress(),
+                2,
+                toWei(priceOfanItem),
+                addrs[1].address,
+                buyer.address
+              )   
 
-                await expect((await market.connect(buyer).purchaseOneItemFromBatch(1, {value: toWei(priceOfanItem)})).wait())
-                .to.emit(market, "Bought")
-                  .withArgs(
-                    1,
-                    index,
-                    await nft.getAddress(),
-                    1,
-                    toWei(priceOfanItem),
-                    addrs[1].address,
-                    buyer.address
-                  )          
+            await expect((await market.connect(buyer).purchaseOneItemFromBatch(1, {value: toWei(priceOfanItem)})).wait())
+            .to.emit(market, "Bought")
+            .withArgs(
+                1,
+                2,
+                await nft.getAddress(),
+                2,
+                toWei(priceOfanItem),
+                addrs[1].address,
+                buyer.address
+            ) 
+
+            await expect((await market.connect(buyer).purchaseOneItemFromBatch(2, {value: toWei(priceOfanItem)})).wait())
+            .to.emit(market, "Bought")
+            .withArgs(
+                2,
+                11,
+                await nft.getAddress(),
+                2,
+                toWei(priceOfanItem),
+                addrs[1].address,
+                buyer.address
+            ) 
+
+            await expect((await market.connect(buyer).purchaseOneItemFromBatch(1, {value: toWei(priceOfanItem)})).wait())
+            .to.emit(market, "Bought")
+            .withArgs(
+                1,
+                3,
+                await nft.getAddress(),
+                2,
+                toWei(priceOfanItem),
+                addrs[1].address,
+                buyer.address
+            ) 
+
+            await expect((await market.connect(buyer).purchaseOneItemFromBatch(2, {value: toWei(priceOfanItem)})).wait())
+            .to.emit(market, "Bought")
+            .withArgs(
+                2,
+                12,
+                await nft.getAddress(),
+                2,
+                toWei(priceOfanItem),
+                addrs[1].address,
+                buyer.address
+            ) 
+
+            //   uint batchId,
+            //   uint batchItemIds,
+            //   address indexed nft,
+            //   uint batchListedCount,
+            //   uint priceOfanItem,
+            //   address indexed seller,
+            //   address indexed buyer
+           
+           
+            // for (let index = 1; index <=10; index++) {
+
+            //     await expect((await market.connect(buyer).purchaseOneItemFromBatch(1, {value: toWei(priceOfanItem)})).wait())
+            //     .to.emit(market, "Bought")
+            //       .withArgs(
+            //         1,
+            //         index,
+            //         await nft.getAddress(),
+            //         2,
+            //         toWei(priceOfanItem),
+            //         addrs[1].address,
+            //         buyer.address
+            //       )          
                 
-            }
+            // }
             
             // for (let index = 11; index <=20; index++) {
 
